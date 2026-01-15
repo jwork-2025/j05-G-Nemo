@@ -10,7 +10,9 @@ import com.gameengine.scene.Scene;
 
 import java.util.List;
 import java.util.Random;
-
+import com.gameengine.recording.RecordingConfig;
+import com.gameengine.recording.RecordingService;
+import java.io.IOException;
 public class GameExample {
     public static void main(String[] args) {
         System.out.println("启动游戏引擎...");
@@ -197,6 +199,16 @@ public class GameExample {
             };
 
             engine.setScene(gameScene);
+            
+            // 开始录像
+            try {
+                engine.startRecording("recordings/game_session.jsonl");
+                System.out.println("Recording started to recordings/game_session.jsonl");
+            } catch (IOException e) {
+                System.err.println("Failed to start recording: " + e.getMessage());
+                // Continue without recording
+            }
+
             engine.run();
 
         } catch (Exception e) {
