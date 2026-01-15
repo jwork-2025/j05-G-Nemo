@@ -13,6 +13,8 @@ import java.util.Random;
 import com.gameengine.recording.RecordingConfig;
 import com.gameengine.recording.RecordingService;
 import java.io.IOException;
+import java.text.SimpleDateFormat;  
+import java.util.Date; 
 public class GameExample {
     public static void main(String[] args) {
         System.out.println("启动游戏引擎...");
@@ -202,8 +204,11 @@ public class GameExample {
             
             // 开始录像
             try {
-                engine.startRecording("recordings/game_session.jsonl");
-                System.out.println("Recording started to recordings/game_session.jsonl");
+                String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                String filename = "recordings/game_session_" + timestamp + ".jsonl";
+                System.out.println("Recording to: " + filename);
+                engine.startRecording(filename);
+                System.out.println("Recording started to " + filename);
             } catch (IOException e) {
                 System.err.println("Failed to start recording: " + e.getMessage());
                 // Continue without recording
