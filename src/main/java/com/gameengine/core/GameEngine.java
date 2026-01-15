@@ -2,8 +2,16 @@ package com.gameengine.core;
 
 import com.gameengine.graphics.Renderer;
 import com.gameengine.input.InputManager;
+import com.gameengine.recording.RecordingConfig;
+import com.gameengine.recording.RecordingService;
 import com.gameengine.scene.Scene;
+
+import java.io.IOException;
+
 import javax.swing.Timer;
+import com.gameengine.recording.RecordingConfig;
+import com.gameengine.recording.RecordingService;
+import java.io.IOException;
 
 /**
  * 游戏引擎
@@ -21,6 +29,9 @@ public class GameEngine {
     //用来计算帧率
     private long startTime = 0;
     private long frameCount = 0;
+    private final int screenWidth;
+    private final int screenHeight;
+    private RecordingService recordingService;
     public long getStartTime() {
         return startTime;
     }
@@ -28,6 +39,8 @@ public class GameEngine {
         return frameCount;
     }
     public GameEngine(int width, int height, String title) {
+        this.screenWidth = width;  // ADD
+        this.screenHeight = height;  // ADD
         this.title = title;
         this.renderer = new Renderer(width, height, title);
         this.inputManager = InputManager.getInstance();
@@ -81,10 +94,18 @@ public class GameEngine {
     private void update() {
         // 计算时间间隔
         long currentTime = System.nanoTime();
-        deltaTime = (currentTime - lastTime) / 1_000_000_000.0f; // 转换为秒
+        deltaTime = (currentTime - lastTime) / 1_000_000_000.0f;
         lastTime = currentTime;
         
-        // 更新输入
+        // 先处理事件（填充justPressedKeys）
+        renderer.pollEvents();
+        
+        // 录像更新（捕获本帧输入 + 关键帧）
+        if (recordingService != null && recordingService.isRecording()) {
+            recordingService.update(deltaTime, currentScene, inputManager);
+        }
+        
+        // 清空瞬态输入（为下一帧准备）
         inputManager.update();
         
         // 更新场景
@@ -92,15 +113,10 @@ public class GameEngine {
             currentScene.update(deltaTime);
         }
         
-        // 处理事件
-        renderer.pollEvents();
-        
         // 检查退出条件
-        if (inputManager.isKeyPressed(27)) { // ESC键
+        if (inputManager.isKeyPressed(27)) {  // ESC
             stop();
         }
-
-        // 检查窗口是否关闭
         if (renderer.shouldClose()) {
             stop();
         }
@@ -141,6 +157,10 @@ public class GameEngine {
      * 停止游戏引擎
      */
     public void stop() {
+        if (recordingService != null) {
+        recordingService.stop();
+        recordingService = null;
+        }
         running = false;
         if (gameTimer != null) {
             gameTimer.stop();
@@ -204,5 +224,19 @@ public class GameEngine {
      */
     public boolean isRunning() {
         return running;
+    }
+    /**
+     * 开始录像到指定路径
+     */
+    public void startRecording(String outputPath) throws IOException {
+        if (recordingService != null && recordingService.isRecording()) {
+            return;  // Already recording
+        }
+        RecordingConfig config = new RecordingConfig(outputPath);
+        recordingService = new RecordingService(config);
+        if (currentScene == null) {
+            throw new IllegalStateException("Cannot start recording: no scene set");
+        }
+        recordingService.start(currentScene, screenWidth, screenHeight);
     }
 }
