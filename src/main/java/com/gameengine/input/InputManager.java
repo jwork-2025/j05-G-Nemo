@@ -146,4 +146,11 @@ public class InputManager {
     public float getMouseY() {
         return mousePosition.y;
     }
+
+        /**
+     * 获取当前帧刚刚按下的按键快照（用于录像）
+     */
+    public Set<Integer> getJustPressedKeysSnapshot() {
+        return new HashSet<>(justPressedKeys);
+    }
 }
