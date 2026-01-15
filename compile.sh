@@ -21,7 +21,12 @@ javac -d build/classes \
     src/main/java/com/gameengine/core/GameEngine.java \
     src/main/java/com/gameengine/core/GameLogic.java \
     src/main/java/com/gameengine/scene/Scene.java \
-    src/main/java/com/gameengine/example/GameExample.java
+    src/main/java/com/gameengine/example/GameExample.java \
+    src/main/java/com/gameengine/recording/RecordingStorage.java \
+    src/main/java/com/gameengine/recording/FileRecordingStorage.java \
+    src/main/java/com/gameengine/recording/RecordingConfig.java \
+    src/main/java/com/gameengine/recording/RecordingJson.java \
+    src/main/java/com/gameengine/recording/RecordingService.java
 
 if [ $? -eq 0 ]; then
     echo "编译成功！"
@@ -30,3 +35,4 @@ else
     echo "编译失败！"
     exit 1
 fi
+
