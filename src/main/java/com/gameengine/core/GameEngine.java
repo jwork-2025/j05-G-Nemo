@@ -105,13 +105,13 @@ public class GameEngine {
             recordingService.update(deltaTime, currentScene, inputManager);
         }
         
-        // 清空瞬态输入（为下一帧准备）
-        inputManager.update();
-        
-        // 更新场景
+        // 更新场景（这里会处理按钮的输入检测）
         if (currentScene != null) {
             currentScene.update(deltaTime);
         }
+        
+        // 清空瞬态输入（为下一帧准备）——现在移到场景更新之后
+        inputManager.update();
         
         // 检查退出条件
         if (inputManager.isKeyPressed(27)) {  // ESC

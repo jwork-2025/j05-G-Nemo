@@ -46,19 +46,23 @@ public class Renderer extends JFrame {
     }
 
     private void setupInput() {
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                inputManager.onKeyPressed(e.getKeyCode());
-            }
+    // Attach ALL input listeners to the GamePanel (the actual 800x600 drawing area)
+    gamePanel.setFocusable(true);
+    gamePanel.requestFocusInWindow();
 
-            @Override
-            public void keyReleased(KeyEvent e) {
-                inputManager.onKeyReleased(e.getKeyCode());
-            }
+    gamePanel.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+            inputManager.onKeyPressed(e.getKeyCode());
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            inputManager.onKeyReleased(e.getKeyCode());
+        }
         });
 
-        addMouseListener(new MouseAdapter() {
+        gamePanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 inputManager.onMousePressed(e.getButton());
@@ -70,17 +74,21 @@ public class Renderer extends JFrame {
             }
         });
 
-        addMouseMotionListener(new MouseAdapter() {
+        gamePanel.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
                 inputManager.onMouseMoved(e.getX(), e.getY());
             }
         });
 
-        setFocusable(true);
-        requestFocus();
+        // Optional: ensure the panel keeps focus when clicked
+        gamePanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                gamePanel.requestFocusInWindow();
+            }
+        });
     }
-
     /**
      * 开始渲染帧
      */

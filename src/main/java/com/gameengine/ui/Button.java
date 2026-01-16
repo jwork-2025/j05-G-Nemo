@@ -27,7 +27,8 @@ public class Button extends GameObject {
         super.update(deltaTime);
         Vector2 mouse = InputManager.getInstance().getMousePosition();
         boolean isOver = mouse.x > position.x && mouse.x < position.x + size.x &&
-                         mouse.y > position.y && mouse.y < position.y + size.y;
+                        mouse.y > position.y && mouse.y < position.y + size.y;
+
         if (isOver && InputManager.getInstance().isMouseButtonJustPressed(1)) {
             onClick.onClick();
         }
@@ -36,8 +37,16 @@ public class Button extends GameObject {
     @Override
     public void render() {
         super.render();
-        renderer.drawRect(position.x, position.y, size.x, size.y, 0.5f, 0.5f, 0.5f, 1.0f);
-        renderer.drawText(position.x + 10, position.y + size.y / 2 + 10, text, 1.0f, 1.0f, 1.0f, 1.0f); // Adjust text position
+        Vector2 mouse = InputManager.getInstance().getMousePosition();
+        boolean isOver = mouse.x > position.x && mouse.x < position.x + size.x &&
+                        mouse.y > position.y && mouse.y < position.y + size.y;
+
+        float r = 0.5f, g = 0.5f, b = 0.5f;
+        if (isOver) {
+            r = g = b = 0.7f;  // lighter when hovered
+        }
+        renderer.drawRect(position.x, position.y, size.x, size.y, r, g, b, 1.0f);
+        renderer.drawText(position.x + 10, position.y + size.y / 2 + 8, text, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 }
 
