@@ -28,6 +28,9 @@ public class ReplayScene extends Scene {
     private double maxTime = 0.0;
     private int screenWidth = 800;
     private int screenHeight = 600;
+    private double gameOverTime = -1.0;
+    private int enemiesKilled = 0;
+    private double averageFps = 0.0;
 
     public ReplayScene(GameEngine engine, Renderer renderer, MenuScene menuScene, String path) {
         super("Replay");
@@ -95,9 +98,26 @@ public class ReplayScene extends Scene {
                         keyframes.add(new Keyframe(t, states));
                     }
                 }
+                else if ("gameover".equals(type)) {
+                        gameOverTime = RecordingJson.parseDouble(RecordingJson.field(line, "t"));
+                        String killedStr = RecordingJson.field(line, "killed");
+                        String fpsStr = RecordingJson.field(line, "fps");
+                        if (killedStr != null) enemiesKilled = (int) RecordingJson.parseDouble(killedStr);
+                        if (fpsStr != null) averageFps = RecordingJson.parseDouble(fpsStr);
+                        maxTime = Math.max(maxTime, gameOverTime);
+                    }
+
             }
 
             keyframes.sort(Comparator.comparingDouble(k -> k.time));
+            System.out.println("Loaded " + keyframes.size() + " keyframes, maxTime=" + maxTime);
+            if (!keyframes.isEmpty()) {
+                System.out.println("First keyframe time=" + keyframes.get(0).time + ", entities=" + keyframes.get(0).states.size());
+                for (EntityState s : keyframes.get(0).states) {
+                    System.out.println("Entity id=" + s.id + ", name=" + s.name + ", rt=" + s.renderType + ", x=" + s.x + ", y=" + s.y + ", color=" + (s.color != null ? java.util.Arrays.toString(s.color) : "null"));
+                }
+            }
+
         } catch (IOException e) {
             System.err.println("Failed to load replay: " + e.getMessage());
             engine.setScene(menuScene);
@@ -115,34 +135,32 @@ public class ReplayScene extends Scene {
 
     @Override
     public void render() {
-        renderer.drawRect(0, 0, screenWidth, screenHeight, 0.1f, 0.1f, 0.2f, 1.0f);
+        renderer.drawRect(0, 0, 800, 600, 0.2f, 0.2f, 0.2f, 1.0f);
 
-        Keyframe prev = null;
-        Keyframe next = null;
-        for (Keyframe kf : keyframes) {
-            if (kf.time <= currentTime) {
-                prev = kf;
-            } else {
-                next = kf;
-                break;
-            }
+        // Find prev and next keyframe
+        int idx = 0;
+        for (; idx < keyframes.size(); idx++) {
+            if (keyframes.get(idx).time > currentTime) break;
         }
-
-        if (prev == null) {
-            return;
-        }
-
-        Map<Long, EntityState> prevStatesMap = new HashMap<>();
-        for (EntityState s : prev.states) {
-            prevStatesMap.put(s.id, s);
-        }
+        Keyframe prev = (idx > 0) ? keyframes.get(idx - 1) : null;
+        Keyframe next = (idx < keyframes.size()) ? keyframes.get(idx) : null;
 
         List<EntityState> statesToRender;
-        if (next == null) {
-            statesToRender = prev.states;
+        if (prev == null) {
+            if (next == null) {
+                return;  // No keyframes at all—nothing to render
+            }
+            statesToRender = next.states;  // Before first keyframe: use the first one statically
+        } else if (next == null) {
+            statesToRender = prev.states;  // After last keyframe: use the last one statically
         } else {
+            // Interpolate between prev and next
             double frac = (currentTime - prev.time) / (next.time - prev.time);
             Map<Long, EntityState> interpStates = new HashMap<>();
+            Map<Long, EntityState> prevStatesMap = new HashMap<>();
+            for (EntityState s : prev.states) {
+                prevStatesMap.put(s.id, s);
+            }
             Set<Long> allIds = new HashSet<>(prevStatesMap.keySet());
             for (EntityState s : next.states) {
                 allIds.add(s.id);
@@ -168,8 +186,12 @@ public class ReplayScene extends Scene {
             }
             statesToRender = new ArrayList<>(interpStates.values());
         }
-
         renderStates(statesToRender);
+        if (gameOverTime >= 0 && currentTime >= gameOverTime) {
+            renderer.drawText(200, 280, "Game Over!", 1.0f, 0.0f, 0.0f, 1.0f);
+            renderer.drawText(200, 320, "Enemies killed: " + enemiesKilled, 1.0f, 1.0f, 1.0f, 1.0f);
+            renderer.drawText(200, 360, "Average FPS: " + String.format("%.2f", averageFps), 1.0f, 1.0f, 1.0f, 1.0f);
+        }
     }
 
     private void renderStates(List<EntityState> states) {

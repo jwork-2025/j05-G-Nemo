@@ -7,16 +7,73 @@ public final class RecordingJson {
     private RecordingJson() {}
 
     public static String field(String json, String key) {
-        int i = json.indexOf("\"" + key + "\"");
-        if (i < 0) return null;
-        int c = json.indexOf(':', i);
-        if (c < 0) return null;
-        int end = c + 1;
-        int comma = json.indexOf(',', end);
-        int brace = json.indexOf('}', end);
-        int j = (comma < 0) ? brace : (brace < 0 ? comma : Math.min(comma, brace));
-        if (j < 0) j = json.length();
-        return json.substring(end, j).trim();
+        // Find the start of the key
+        String search = "\"" + key + "\":";
+        int pos = json.indexOf(search);
+        if (pos < 0) return null;
+
+        // Move past the colon
+        pos += search.length();
+
+        // Skip whitespace after the colon
+        while (pos < json.length() && Character.isWhitespace(json.charAt(pos))) {
+            pos++;
+        }
+        if (pos >= json.length()) return null;
+
+        char startChar = json.charAt(pos);
+        int end = pos;
+        int depth = 0;
+
+        if (startChar == '{' || startChar == '[') {
+            // Object or array: track nesting depth
+            depth = 1;
+            end = pos + 1;
+            char open = startChar;
+            char close = (open == '{' ? '}' : ']');
+
+            while (end < json.length()) {
+                char c = json.charAt(end);
+                if (c == open) {
+                    depth++;
+                } else if (c == close) {
+                    depth--;
+                    if (depth == 0) {
+                        end++;  // Include the closing brace/bracket
+                        break;
+                    }
+                }
+                end++;
+            }
+
+            if (depth != 0) {
+                // Unbalanced - malformed JSON
+                return null;
+            }
+        } else if (startChar == '"') {
+            // String value: find matching closing quote (simple, no escaped quotes in this JSON)
+            end = pos + 1;
+            while (end < json.length()) {
+                if (json.charAt(end) == '"' && json.charAt(end - 1) != '\\') {
+                    end++;  // Include closing quote
+                    break;
+                }
+                end++;
+            }
+        } else {
+            // Primitive: number, true, false, null - stop at comma, closing brace, or space
+            while (end < json.length()) {
+                char c = json.charAt(end);
+                if (c == ',' || c == '}' || Character.isWhitespace(c)) {
+                    break;
+                }
+                end++;
+            }
+        }
+
+        // Extract and trim the value substring
+        String value = json.substring(pos, end).trim();
+        return value;
     }
 
     public static String stripQuotes(String s) {

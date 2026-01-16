@@ -8,7 +8,9 @@ import com.gameengine.scene.Scene;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -34,6 +36,9 @@ public class RecordingService {
         this.keyframeElapsed = 0.0;
         this.sampleAccumulator = 0.0;
         this.qfmt = new DecimalFormat();
+        this.qfmt.setMaximumFractionDigits(Math.max(0, config.quantizeDecimals));
+        this.qfmt.setGroupingUsed(false);
+        this.qfmt.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.US));  // Force dot as decimal
         this.qfmt.setMaximumFractionDigits(Math.max(0, config.quantizeDecimals));
         this.qfmt.setGroupingUsed(false);
     }
@@ -72,11 +77,30 @@ public class RecordingService {
         if (!recording) return;
         try {
             if (lastScene != null) {
-                writeKeyframe(lastScene);
+                writeKeyframe(lastScene);  // Final snapshot of entities
             }
         } catch (Exception ignored) {}
         recording = false;
-        try { writerThread.join(500); } catch (InterruptedException ignored) {}
+        try {
+            writerThread.join();  // Wait indefinitely → prevents truncation
+        } catch (InterruptedException ignored) {}
+    }
+
+    // NEW: Force write a keyframe immediately (useful at game over)
+    public void forceKeyframe(Scene scene) {
+        if (recording && scene != null) {
+            writeKeyframe(scene);
+        }
+    }
+    public void writeGameOver(double timestamp, int enemiesKilled, double averageFps) {
+        if (!recording) return;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"type\":\"gameover\",");
+        sb.append("\"t\":").append(qfmt.format(timestamp)).append(",");
+        sb.append("\"killed\":").append(enemiesKilled).append(",");
+        sb.append("\"fps\":").append(qfmt.format(averageFps));
+        sb.append("}");
+        enqueue(sb.toString());
     }
 
     public void update(double deltaTime, Scene scene, InputManager input) {
@@ -159,4 +183,3 @@ public class RecordingService {
         }
     }
 }
-

@@ -239,4 +239,8 @@ public class GameEngine {
         }
         recordingService.start(currentScene, screenWidth, screenHeight);
     }
+
+    public RecordingService getRecordingService() {
+    return recordingService;
+    }
 }

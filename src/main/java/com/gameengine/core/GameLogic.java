@@ -6,6 +6,7 @@ import com.gameengine.components.HealthComponent;
 import com.gameengine.core.GameObject;
 import com.gameengine.input.InputManager;
 import com.gameengine.math.Vector2;
+import com.gameengine.recording.RecordingService;
 import com.gameengine.scene.Scene;
 import com.gameengine.components.RenderComponent;
 import com.gameengine.graphics.Renderer;
@@ -543,6 +544,17 @@ public class GameLogic {
                 endTime = System.nanoTime();
                 finalFrameCount = engine.getFrameCount();
             }
+            // NEW: Handle recording when game ends
+            RecordingService rs = engine.getRecordingService();
+            if (rs != null && rs.isRecording()) {
+                double totalTimeSec = (endTime - engine.getStartTime()) / 1_000_000_000.0;
+                double avgFps = (totalTimeSec > 0) ? (finalFrameCount / totalTimeSec) : 0.0;
+
+                rs.forceKeyframe(scene);                    // Capture final entity positions
+                rs.writeGameOver(totalTimeSec, enemiesKilled, avgFps);  // Write game over info
+                rs.stop();                                  // Immediately stop recording
+            }
+
         }
 
         // Batch remove
