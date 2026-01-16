@@ -13,6 +13,7 @@ javac -d build/classes \
     src/main/java/com/gameengine/input/InputManager.java \
     src/main/java/com/gameengine/core/Component.java \
     src/main/java/com/gameengine/core/GameObject.java \
+    src/main/java/com/gameengine/core/Player.java \
     src/main/java/com/gameengine/components/TransformComponent.java \
     src/main/java/com/gameengine/components/PhysicsComponent.java \
     src/main/java/com/gameengine/components/RenderComponent.java \
@@ -21,6 +22,12 @@ javac -d build/classes \
     src/main/java/com/gameengine/core/GameEngine.java \
     src/main/java/com/gameengine/core/GameLogic.java \
     src/main/java/com/gameengine/scene/Scene.java \
+    src/main/java/com/gameengine/scene/GameScene.java \
+    src/main/java/com/gameengine/scene/MenuScene.java \
+    src/main/java/com/gameengine/scene/ReplaySelectionScene.java \
+    src/main/java/com/gameengine/scene/ReplayScene.java \
+    src/main/java/com/gameengine/ui/Button.java \
+    src/main/java/com/gameengine/ui/ButtonClickHandler.java \
     src/main/java/com/gameengine/example/GameExample.java \
     src/main/java/com/gameengine/recording/RecordingStorage.java \
     src/main/java/com/gameengine/recording/FileRecordingStorage.java \
@@ -35,4 +42,5 @@ else
     echo "编译失败！"
     exit 1
 fi
+
 

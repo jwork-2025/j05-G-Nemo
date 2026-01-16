@@ -1,3 +1,4 @@
+// Modified RecordingService.java to record numeric ID and name
 package com.gameengine.recording;
 
 import com.gameengine.components.TransformComponent;
@@ -21,7 +22,7 @@ public class RecordingService {
     private double elapsed;
     private double keyframeElapsed;
     private double sampleAccumulator;
-    private final double warmupSec = 0.1; // 等待一帧让场景对象完成初始化
+    private final double warmupSec = 0.1;
     private final DecimalFormat qfmt;
     private Scene lastScene;
 
@@ -63,7 +64,6 @@ public class RecordingService {
         recording = true;
         writerThread.start();
 
-        // header
         enqueue("{\"type\":\"header\",\"version\":1,\"w\":" + width + ",\"h\":" + height + "}");
         keyframeElapsed = 0.0;
     }
@@ -86,7 +86,6 @@ public class RecordingService {
         sampleAccumulator += deltaTime;
         lastScene = scene;
 
-        // input events (sample at native frequency, but只写有justPressed)
         Set<Integer> just = input.getJustPressedKeysSnapshot();
         if (!just.isEmpty()) {
             StringBuilder sb = new StringBuilder();
@@ -101,9 +100,6 @@ public class RecordingService {
             enqueue(sb.toString());
         }
 
-        // sampled deltas placeholder（可扩展）：此处先跳过，保持最小版本
-
-        // periodic keyframe（跳过开头暖机，避免空关键帧）
         if (elapsed >= warmupSec && keyframeElapsed >= config.keyframeIntervalSec) {
             if (writeKeyframe(scene)) {
                 keyframeElapsed = 0.0;
@@ -124,11 +120,11 @@ public class RecordingService {
             float y = tc.getPosition().y;
             if (!first) sb.append(',');
             sb.append('{')
-              .append("\"id\":\"").append(obj.getName()).append("\",")
+              .append("\"id\":").append(obj.getId()).append(',')
+              .append("\"name\":\"").append(obj.getName()).append("\",")
               .append("\"x\":").append(qfmt.format(x)).append(',')
               .append("\"y\":").append(qfmt.format(y));
 
-            // 可选渲染信息（若对象带有 RenderComponent，则记录形状、尺寸、颜色）
             com.gameengine.components.RenderComponent rc = obj.getComponent(com.gameengine.components.RenderComponent.class);
             if (rc != null) {
                 com.gameengine.components.RenderComponent.RenderType rt = rc.getRenderType();
@@ -144,7 +140,6 @@ public class RecordingService {
                   .append(qfmt.format(col.b)).append(',')
                   .append(qfmt.format(col.a)).append(']');
             } else {
-                // 标记自定义渲染（如 Player），方便回放做近似还原
                 sb.append(',').append("\"rt\":\"CUSTOM\"");
             }
 
@@ -160,9 +155,8 @@ public class RecordingService {
 
     private void enqueue(String line) {
         if (!lineQueue.offer(line)) {
-            // 简单丢弃策略：队列满时丢弃低优先级数据（此处直接丢弃）
+            // Drop if full
         }
     }
 }
-
 
