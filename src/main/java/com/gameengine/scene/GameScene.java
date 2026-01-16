@@ -7,7 +7,7 @@ import com.gameengine.core.GameLogic;
 import com.gameengine.core.GameObject;
 import com.gameengine.graphics.Renderer;
 import com.gameengine.math.Vector2;
-
+import com.gameengine.core.Player;
 import java.util.Random;
 
 public class GameScene extends Scene {

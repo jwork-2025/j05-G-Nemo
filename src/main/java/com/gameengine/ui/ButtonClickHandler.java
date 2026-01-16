@@ -1,6 +1,6 @@
 package com.gameengine.ui;
 
 @FunctionalInterface
-interface ButtonClickHandler {
+public interface ButtonClickHandler {
     void onClick();
 }
